@@ -600,7 +600,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
    ne jamais les renommer sans changer le script Apps Script aussi.
    ================================================================ */
 const CONFIG = {
-  version:   'v2.2',   // affiche en bas de page, doit correspondre au script
+  version:   'v2.3',   // affiche en bas de page, doit correspondre au script
   festival:  'Festival Mantra Joie',
   code:      'MANTRA2026',
   scriptUrl: 'https://script.google.com/macros/s/AKfycby-x4py-iWew0GoEu1-2i8Z_LJmYifEE3t4pv3gIvzykXqHtyB1plKDXK0_kIIyIssH/exec',
@@ -1090,38 +1090,45 @@ function envoyer() {
     gallery: etat.gallery
   };
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', CONFIG.scriptUrl);
-  // text/plain : pas de preflight CORS, Apps Script repond sans souci
-  xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
-
   $('nav-6').style.display = 'none';
   $('envoi-progression').style.display = 'block';
 
-  xhr.upload.onprogress = e => {
-    if (e.lengthComputable) {
-      const pct = Math.round((e.loaded / e.total) * 100);
-      $('remplissage').style.width = pct + '%';
-      $('texte-envoi').textContent = pct < 100
-        ? `Le colibri s'envole avec ta page\u2026 ${pct} %`
-        : 'Presque arriv\u00e9, il se pose\u2026';
-    }
-  };
+  // Barre animee : fetch ne donne pas de progression d'envoi,
+  // on avance doucement jusqu'a 90% puis 100% a la reponse
+  let pct = 0;
+  const minuteur = setInterval(() => {
+    if (pct < 90) { pct += 2; $('remplissage').style.width = pct + '%'; }
+  }, 350);
+  $('texte-envoi').textContent = "Le colibri s'envole avec ta page\u2026";
 
-  xhr.onload = () => {
+  // fetch et non XHR : les POST vers Apps Script passent par une
+  // redirection Google que fetch suit proprement (XHR echoue parfois
+  // avec un statut 0)
+  fetch(CONFIG.scriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(donnees),
+    redirect: 'follow'
+  })
+  .then(async res => {
+    clearInterval(minuteur);
+    $('remplissage').style.width = '100%';
+    const texte = await res.text();
     let rep = {};
-    try { rep = JSON.parse(xhr.responseText); } catch (e) {}
-    if (xhr.status === 200 && rep.ok) {
+    try { rep = JSON.parse(texte); } catch (e) {}
+    if (res.ok && rep.ok) {
       const prenom = valeur('name').split(' ')[0];
       $('titre-merci').textContent = `Merci ${prenom} ! \ud83c\udf89`;
       aller('merci');
       confettis();
     } else {
-      echecEnvoi(rep, xhr);
+      echecEnvoi(rep, { status: res.status, statusText: res.statusText, responseText: texte });
     }
-  };
-  xhr.onerror = () => echecEnvoi(null, xhr);
-  xhr.send(JSON.stringify(donnees));
+  })
+  .catch(err => {
+    clearInterval(minuteur);
+    echecEnvoi(null, { status: 0, statusText: err.message, responseText: '' });
+  });
 }
 
 function echecEnvoi(rep, xhr) {
