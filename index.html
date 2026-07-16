@@ -363,7 +363,12 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
 
       <div class="champ">
         <label class="etiquette obligatoire" for="name">Ton nom <span class="astuce">(de scène, d'atelier ou de stand : celui qu'on affichera)</span></label>
-        <input type="text" id="name" autocomplete="name">
+        <input type="text" id="name">
+      </div>
+
+      <div class="champ" id="champ-real-name">
+        <label class="etiquette obligatoire" for="real_name">Ton nom et prénom <span class="astuce">(usage interne, jamais publié sur le site)</span></label>
+        <input type="text" id="real_name" autocomplete="name">
       </div>
 
       <div class="champ">
@@ -595,7 +600,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
 const CONFIG = {
   festival:  'Festival Mantra Joie',
   code:      'MANTRA2026',
-  scriptUrl: 'https://script.google.com/macros/s/AKfycby_sAfQiAfd-b1I-VfcKBfPx5PKv9H_XRzenWNh31gyaLAmXOraxrMDdaXX6E8F__Qx/exec',
+  scriptUrl: 'https://script.google.com/macros/s/AKfycby-x4py-iWew0GoEu1-2i8Z_LJmYifEE3t4pv3gIvzykXqHtyB1plKDXK0_kIIyIssH/exec',
   categories: ['Artiste', 'Atelier', 'Bien-être', 'Artisan', "L'Antre deux mondes", 'Stand / Miam Miam', 'Autre'],
   typesArtiste: ['DJ ecstatic', 'Cercle de chants', 'Sieste musicale', 'Spectacle', 'Concert'],
   couleursConfettis: ['#D6248C', '#8E3DA6', '#2BB8C4', '#F0663C', '#E0A93B']
@@ -675,6 +680,8 @@ function creerPuces(conteneur, valeurs, auClic) {
 creerPuces('puces-categorie', CONFIG.categories, v => {
   etat.category = v;
   $('champ-type').style.display = (v === 'Artiste') ? 'block' : 'none';
+  // Artiste : nom de scene suffit. Toutes les autres categories : nom reel requis.
+  $('champ-real-name').style.display = (v === 'Artiste') ? 'none' : 'block';
   if (v !== 'Artiste') etat.artist_type = '';
 });
 creerPuces('puces-type', CONFIG.typesArtiste, v => { etat.artist_type = v; });
@@ -682,6 +689,8 @@ creerPuces('puces-type', CONFIG.typesArtiste, v => { etat.artist_type = v; });
 function valider1() {
   if (!etat.category) return erreur(1, 'Choisis ta cat\u00e9gorie.');
   if (!valeur('name')) return erreur(1, 'Ton nom est indispensable, c\u2019est lui qu\u2019on affiche.');
+  if (etat.category !== 'Artiste' && !valeur('real_name'))
+    return erreur(1, 'Ton nom et pr\u00e9nom nous sont n\u00e9cessaires (usage interne uniquement, jamais publi\u00e9s).');
   if (!valeur('email') || !/^\S+@\S+\.\S+$/.test(valeur('email')))
     return erreur(1, 'Un email valide nous permet de te joindre si besoin.');
   majMotsCles();
@@ -1060,6 +1069,7 @@ function envoyer() {
     category: etat.category,
     artist_type: etat.artist_type,
     name: valeur('name'),
+    real_name: valeur('real_name'),
     title_pro: valeur('title_pro'),
     email: valeur('email'),
     subtitle: valeur('subtitle'),
@@ -1104,22 +1114,26 @@ function envoyer() {
       aller('merci');
       confettis();
     } else {
-      echecEnvoi(rep);
+      echecEnvoi(rep, xhr);
     }
   };
-  xhr.onerror = () => echecEnvoi(null);
+  xhr.onerror = () => echecEnvoi(null, xhr);
   xhr.send(JSON.stringify(donnees));
 }
 
-function echecEnvoi(rep) {
+function echecEnvoi(rep, xhr) {
   $('envoi-progression').style.display = 'none';
   $('nav-6').style.display = 'flex';
   if (rep && rep.stage) {
     // Diagnostic precis : etape serveur + message exact
     const etapeFr = NOMS_ETAPES_SERVEUR[rep.stage] || rep.stage;
     erreur(6, `L\u2019envoi a \u00e9chou\u00e9 pendant : ${etapeFr}.\nD\u00e9tail technique : ${rep.error || 'inconnu'}\nRien n\u2019est perdu, tu peux r\u00e9essayer.`);
+  } else if (xhr) {
+    // Pas de reponse structuree : on montre TOUT ce qu'on a pour diagnostiquer
+    const debut = (xhr.responseText || '').substring(0, 300);
+    erreur(6, `\u00c9chec de l\u2019envoi.\nStatut HTTP : ${xhr.status} ${xhr.statusText || ''}\nR\u00e9ponse re\u00e7ue : ${debut || '(vide)'}\n\nCela veut souvent dire que le script n\u2019a pas \u00e9t\u00e9 red\u00e9ploy\u00e9 en \u00ab Nouvelle version \u00bb apr\u00e8s la mise \u00e0 jour du code.`);
   } else {
-    erreur(6, 'L\u2019envoi n\u2019est pas pass\u00e9 (connexion capricieuse ?). Rien n\u2019est perdu : r\u00e9essaie simplement.');
+    erreur(6, 'L\u2019envoi n\u2019est pas pass\u00e9 (connexion capricieuse ?). R\u00e9essaie simplement.');
   }
 }
 
