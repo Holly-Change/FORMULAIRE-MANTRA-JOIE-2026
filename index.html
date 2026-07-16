@@ -588,8 +588,10 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
 
   </main>
 
-  <div class="pied">Festival Mantra Joie · Tes infos servent uniquement à créer ta page et à te contacter.</div>
+  <div class="pied">Festival Mantra Joie · Tes infos servent uniquement à créer ta page et à te contacter. · <span id="version-form"></span></div>
 </div>
+
+<script>document.addEventListener('DOMContentLoaded', () => { document.getElementById('version-form').textContent = CONFIG.version; });</script>
 
 <script>
 /* ================================================================
@@ -598,6 +600,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
    ne jamais les renommer sans changer le script Apps Script aussi.
    ================================================================ */
 const CONFIG = {
+  version:   'v2.2',   // affiche en bas de page, doit correspondre au script
   festival:  'Festival Mantra Joie',
   code:      'MANTRA2026',
   scriptUrl: 'https://script.google.com/macros/s/AKfycby-x4py-iWew0GoEu1-2i8Z_LJmYifEE3t4pv3gIvzykXqHtyB1plKDXK0_kIIyIssH/exec',
