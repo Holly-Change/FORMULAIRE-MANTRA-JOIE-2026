@@ -112,15 +112,62 @@ input[type="text"], input[type="email"], input[type="url"], textarea {
 input:focus, textarea:focus { outline: none; border-color: var(--magenta); }
 textarea { resize: none; overflow: hidden; min-height: 90px; }
 
-/* Jauge de longueur : orange vers vert */
-.jauge { height: 7px; border-radius: 4px; background: var(--ligne); margin-top: 7px; overflow: hidden; }
+/* Jauge de longueur : orange vers vert, avec repere de minimum */
+.jauge { position: relative; height: 7px; border-radius: 4px; background: var(--ligne); margin-top: 7px; }
 .jauge .niveau {
   height: 100%; width: 0%; border-radius: 4px;
   background: var(--or); transition: width .25s, background .25s;
 }
 .jauge .niveau.vert { background: var(--turquoise); }
+.jauge .repere {
+  position: absolute; top: -3px; bottom: -3px; width: 2px;
+  background: var(--violet); border-radius: 1px;
+}
 .jauge-texte { font-size: 13px; color: rgba(28,27,58,.55); margin-top: 4px; }
 .jauge-texte.vert { color: var(--turquoise); font-weight: 700; }
+
+/* Zoom par boutons */
+.zoom-mot { font-weight: 700; font-size: 14px; color: var(--violet); }
+.btn-zoom {
+  width: 44px; height: 44px; border-radius: 50%;
+  font-size: 24px; font-weight: 700; line-height: 1;
+  color: #fff; border: none; cursor: pointer;
+  background: linear-gradient(120deg, var(--magenta), var(--violet));
+  box-shadow: 0 3px 10px rgba(214, 36, 140, 0.3);
+  transition: transform .12s;
+}
+.btn-zoom:active { transform: scale(.92); }
+
+/* Indication "clique et deplace" dans le cadre */
+.cadre .indication {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  background: rgba(28, 27, 58, 0.72); color: #fff;
+  font-size: 14px; font-weight: 700; padding: 8px 14px; border-radius: 999px;
+  pointer-events: none; transition: opacity .4s; white-space: nowrap;
+}
+.cadre .indication.cachee { opacity: 0; }
+
+/* Apercu Google avec vignette */
+.g-ligne { display: flex; gap: 12px; align-items: flex-start; }
+.g-texte { flex: 1; min-width: 0; }
+.g-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; flex: none; }
+
+/* Test des liens */
+.liste-test-liens { margin-top: 10px; }
+.liste-test-liens a {
+  display: block; margin-top: 6px; color: var(--turquoise);
+  font-weight: 700; font-size: 14.5px; word-break: break-all; text-decoration: none;
+}
+
+/* Apercu video */
+.video-lien { position: relative; display: block; max-width: 320px; margin-top: 10px; }
+.video-lien img { width: 100%; border-radius: 12px; display: block; }
+.video-lien .jouer {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(28, 27, 58, 0.75); color: #fff;
+  font-size: 20px; line-height: 52px; text-align: center;
+}
 
 /* Boutons d'insertion */
 .inserer { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -362,13 +409,18 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
       </div>
 
       <div class="champ">
-        <label class="etiquette obligatoire" for="name">Ton nom <span class="astuce">(de scène, d'atelier ou de stand : celui qu'on affichera)</span></label>
+        <label class="etiquette obligatoire" for="name">Ton nom de scène, de marque ou de stand <span class="astuce">(celui qu'on affichera sur ta page)</span></label>
         <input type="text" id="name">
       </div>
 
-      <div class="champ" id="champ-real-name">
-        <label class="etiquette obligatoire" for="real_name">Ton nom et prénom <span class="astuce">(usage interne, jamais publié sur le site)</span></label>
-        <input type="text" id="real_name" autocomplete="name">
+      <div class="champ" id="champ-identite">
+        <label class="etiquette obligatoire" id="etiquette-prenom" for="first_name">Ton prénom <span class="astuce">(usage interne, jamais publié)</span></label>
+        <input type="text" id="first_name" autocomplete="given-name">
+      </div>
+
+      <div class="champ">
+        <label class="etiquette obligatoire" id="etiquette-nom" for="last_name">Ton nom de famille <span class="astuce">(usage interne, jamais publié)</span></label>
+        <input type="text" id="last_name" autocomplete="family-name">
       </div>
 
       <div class="champ">
@@ -406,8 +458,8 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
           <button type="button" class="btn-inserer" onclick="inserer('snippet', valeur('subtitle'))">+ Sous-titre</button>
         </div>
         <textarea id="snippet" rows="2"></textarea>
-        <div class="jauge"><div class="niveau" id="jauge-snippet"></div></div>
-        <div class="jauge-texte" id="jauge-snippet-texte">0 caractère</div>
+        <div class="jauge"><div class="niveau" id="jauge-snippet"></div><div class="repere" style="left:41%"></div></div>
+        <div class="jauge-texte" id="jauge-snippet-texte">0 caractère · minimum 70 pour que Google puisse l'utiliser</div>
       </div>
 
       <div class="champ">
@@ -418,8 +470,8 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
           <button type="button" class="btn-inserer" onclick="inserer('presentation', valeur('subtitle'))">+ Sous-titre</button>
         </div>
         <textarea id="presentation" rows="5"></textarea>
-        <div class="jauge"><div class="niveau" id="jauge-presentation"></div></div>
-        <div class="jauge-texte" id="jauge-presentation-texte">0 caractère</div>
+        <div class="jauge"><div class="niveau" id="jauge-presentation"></div><div class="repere" style="left:50%"></div></div>
+        <div class="jauge-texte" id="jauge-presentation-texte">0 caractère · le trait marque le minimum conseillé de 300</div>
         <div class="jauge-texte" id="mots-cles-texte"></div>
       </div>
 
@@ -448,14 +500,15 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
         <input type="file" id="fichier-principal" accept="image/*" hidden>
 
         <div class="recadreur" id="recadreur-principal">
-          <div class="cadre" id="cadre-principal"><img id="img-principal" alt=""></div>
+          <div class="cadre" id="cadre-principal"><img id="img-principal" alt=""><div class="indication">✋ Clique et déplace la photo</div></div>
           <div class="zoom-ligne">
-            <span>🔍</span>
-            <input type="range" id="zoom-principal" min="1" max="3" step="0.01" value="1">
+            <span class="zoom-mot">Zoom</span>
+            <button type="button" class="btn-zoom" id="zoom-moins-principal" aria-label="Zoom arrière">−</button>
+            <button type="button" class="btn-zoom" id="zoom-plus-principal" aria-label="Zoom avant">+</button>
           </div>
           <div class="nav-etapes" style="margin-top:12px">
             <button class="btn btn-retour" onclick="annulerPrincipal()">Changer de photo</button>
-            <button class="btn btn-avant" onclick="garderPrincipal()">Garder ce cadrage ✂️</button>
+            <button class="btn btn-avant" onclick="garderPrincipal()">Valider</button>
           </div>
         </div>
 
@@ -472,14 +525,15 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
 
         <div class="recadreur" id="recadreur-galerie">
           <div class="puces formats-galerie" id="puces-formats"></div>
-          <div class="cadre" id="cadre-galerie"><img id="img-galerie" alt=""></div>
+          <div class="cadre" id="cadre-galerie"><img id="img-galerie" alt=""><div class="indication">✋ Clique et déplace la photo</div></div>
           <div class="zoom-ligne">
-            <span>🔍</span>
-            <input type="range" id="zoom-galerie" min="1" max="3" step="0.01" value="1">
+            <span class="zoom-mot">Zoom</span>
+            <button type="button" class="btn-zoom" id="zoom-moins-galerie" aria-label="Zoom arrière">−</button>
+            <button type="button" class="btn-zoom" id="zoom-plus-galerie" aria-label="Zoom avant">+</button>
           </div>
           <div class="nav-etapes" style="margin-top:12px">
             <button class="btn btn-retour" onclick="annulerGalerie()">Annuler</button>
-            <button class="btn btn-avant" onclick="garderGalerie()">Garder cette photo ✂️</button>
+            <button class="btn btn-avant" onclick="garderGalerie()">Valider</button>
           </div>
         </div>
 
@@ -516,6 +570,11 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
         <input type="text" id="other_link">
       </div>
 
+      <div class="champ">
+        <button type="button" class="btn-inserer" onclick="testerLiens()">🔍 Tester mes liens</button>
+        <div class="liste-test-liens" id="liste-test-liens"></div>
+      </div>
+
       <div class="message-erreur" id="erreur-4"></div>
       <div class="nav-etapes">
         <button class="btn btn-retour" onclick="aller(3)">Retour</button>
@@ -538,6 +597,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
       <div class="champ" id="champ-video" style="display:none">
         <label class="etiquette" for="video_url">Le lien YouTube ou Vimeo</label>
         <input type="url" id="video_url" placeholder="https://…">
+        <div id="apercu-video"></div>
       </div>
 
       <div class="message-erreur" id="erreur-5"></div>
@@ -600,7 +660,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
    ne jamais les renommer sans changer le script Apps Script aussi.
    ================================================================ */
 const CONFIG = {
-  version:   'v2.3',   // affiche en bas de page, doit correspondre au script
+  version:   'v2.4',   // affiche en bas de page, doit correspondre au script
   festival:  'Festival Mantra Joie',
   code:      'MANTRA2026',
   scriptUrl: 'https://script.google.com/macros/s/AKfycby-x4py-iWew0GoEu1-2i8Z_LJmYifEE3t4pv3gIvzykXqHtyB1plKDXK0_kIIyIssH/exec',
@@ -683,17 +743,19 @@ function creerPuces(conteneur, valeurs, auClic) {
 creerPuces('puces-categorie', CONFIG.categories, v => {
   etat.category = v;
   $('champ-type').style.display = (v === 'Artiste') ? 'block' : 'none';
-  // Artiste : nom de scene suffit. Toutes les autres categories : nom reel requis.
-  $('champ-real-name').style.display = (v === 'Artiste') ? 'none' : 'block';
+  // Artiste : prenom et nom optionnels. Toutes les autres categories : requis.
+  const artiste = (v === 'Artiste');
+  $('etiquette-prenom').classList.toggle('obligatoire', !artiste);
+  $('etiquette-nom').classList.toggle('obligatoire', !artiste);
   if (v !== 'Artiste') etat.artist_type = '';
 });
 creerPuces('puces-type', CONFIG.typesArtiste, v => { etat.artist_type = v; });
 
 function valider1() {
   if (!etat.category) return erreur(1, 'Choisis ta cat\u00e9gorie.');
-  if (!valeur('name')) return erreur(1, 'Ton nom est indispensable, c\u2019est lui qu\u2019on affiche.');
-  if (etat.category !== 'Artiste' && !valeur('real_name'))
-    return erreur(1, 'Ton nom et pr\u00e9nom nous sont n\u00e9cessaires (usage interne uniquement, jamais publi\u00e9s).');
+  if (!valeur('name')) return erreur(1, 'Ton nom de sc\u00e8ne, de marque ou de stand est indispensable, c\u2019est lui qu\u2019on affiche.');
+  if (etat.category !== 'Artiste' && (!valeur('first_name') || !valeur('last_name')))
+    return erreur(1, 'Ton pr\u00e9nom et ton nom de famille nous sont n\u00e9cessaires (usage interne uniquement, jamais publi\u00e9s).');
   if (!valeur('email') || !/^\S+@\S+\.\S+$/.test(valeur('email')))
     return erreur(1, 'Un email valide nous permet de te joindre si besoin.');
   majMotsCles();
@@ -719,31 +781,35 @@ function inserer(idChamp, texte) {
 
 function autoGrow(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
 
-// Jauge snippet : vert entre 80 et 170 caracteres (zone Google confortable)
+// Jauge snippet : minimum 70 caracteres (en dessous, Google ignore la
+// description), zone verte 70 a 170. Le repere sur la barre marque le minimum.
 $('snippet').addEventListener('input', function () {
   autoGrow(this);
   const n = this.value.length;
   const niveau = $('jauge-snippet'), texte = $('jauge-snippet-texte');
   niveau.style.width = Math.min(100, n / 170 * 100) + '%';
-  const vert = n >= 80 && n <= 170;
+  const vert = n >= 70 && n <= 170;
   niveau.classList.toggle('vert', vert);
   texte.classList.toggle('vert', vert);
   texte.textContent = n + ' caract\u00e8res' +
     (vert ? ' \u00b7 pile la bonne longueur pour Google \u2728'
           : n > 170 ? ' \u00b7 Google coupera sans doute la fin, mais rien de grave'
-          : n > 0 ? ' \u00b7 encore un petit effort' : '');
+          : ' \u00b7 minimum 70 pour que Google puisse l\u2019utiliser');
 });
 
-// Jauge presentation : vert a partir de 300, pas de plafond
+// Jauge presentation : 300 = minimum conseille (le repere au milieu de la
+// barre), et plus long est encore mieux. Jamais de plafond.
 $('presentation').addEventListener('input', function () {
   autoGrow(this);
   const n = this.value.length;
   const niveau = $('jauge-presentation'), texte = $('jauge-presentation-texte');
-  niveau.style.width = Math.min(100, n / 300 * 100) + '%';
+  niveau.style.width = Math.min(100, n / 600 * 100) + '%';
   const vert = n >= 300;
   niveau.classList.toggle('vert', vert);
   texte.classList.toggle('vert', vert);
-  texte.textContent = n + ' caract\u00e8res' + (vert ? ' \u00b7 belle pr\u00e9sentation \u2728' : ' \u00b7 vise au moins 300');
+  texte.textContent = n + ' caract\u00e8res' +
+    (vert ? ' \u00b7 minimum atteint, et plus long est encore mieux \u2728'
+          : ' \u00b7 le trait marque le minimum conseill\u00e9 de 300');
   majMotsCles();
 });
 $('bio').addEventListener('input', function () { autoGrow(this); });
@@ -767,14 +833,17 @@ $('title_pro').addEventListener('input', majMotsCles);
 
 function valider2() {
   if (!valeur('snippet')) return erreur(2, 'Ta phrase courte donne envie de te d\u00e9couvrir, ne la saute pas.');
+  if (valeur('snippet').length < 70)
+    return erreur(2, 'Ta phrase courte fait moins de 70 caract\u00e8res : Google ne pourrait pas l\u2019utiliser. Ajoute quelques mots.');
   if (!valeur('presentation')) return erreur(2, 'Quelques lignes de pr\u00e9sentation et ta page prend vie.');
   aller(3);
 }
 
 // ------------------ Recadreur reutilisable ------------------
-function creerRecadreur(idCadre, idImage, idZoom) {
-  const cadre = $(idCadre), img = $(idImage), zoom = $(idZoom);
-  const r = { cadre, img, zoom, actif: null };
+function creerRecadreur(idCadre, idImage, idMoins, idPlus) {
+  const cadre = $(idCadre), img = $(idImage);
+  const indication = cadre.querySelector('.indication');
+  const r = { cadre, img, actif: null, facteur: 1 };
 
   r.demarrer = (ratioLargeurHauteur) => {
     cadre.style.aspectRatio = ratioLargeurHauteur;
@@ -783,9 +852,10 @@ function creerRecadreur(idCadre, idImage, idZoom) {
       const cw = cadre.clientWidth, ch = cadre.clientHeight;
       const iw = img.naturalWidth, ih = img.naturalHeight;
       const echelleMin = Math.max(cw / iw, ch / ih);
+      r.facteur = 1;
       r.actif = { iw, ih, cw, ch, echelleMin, echelle: echelleMin,
                   x: (cw - iw * echelleMin) / 2, y: (ch - ih * echelleMin) / 2 };
-      zoom.value = 1;
+      if (indication) indication.classList.remove('cachee');
       r.dessiner();
     });
   };
@@ -798,19 +868,24 @@ function creerRecadreur(idCadre, idImage, idZoom) {
     img.style.transform = `translate(${a.x}px, ${a.y}px) scale(${a.echelle})`;
   };
 
-  zoom.oninput = () => {
+  // Zoom par boutons - / + , centre sur le milieu du cadre
+  function zoomer(delta) {
     const a = r.actif; if (!a) return;
-    const nouvelle = a.echelleMin * Number(zoom.value);
+    r.facteur = Math.min(3, Math.max(1, r.facteur + delta));
+    const nouvelle = a.echelleMin * r.facteur;
     const cx = a.cw / 2, cy = a.ch / 2;
     a.x = cx - (cx - a.x) * (nouvelle / a.echelle);
     a.y = cy - (cy - a.y) * (nouvelle / a.echelle);
     a.echelle = nouvelle;
     r.dessiner();
-  };
+  }
+  $(idMoins).onclick = () => zoomer(-0.25);
+  $(idPlus).onclick = () => zoomer(0.25);
 
   let saisi = false, dx = 0, dy = 0;
   cadre.addEventListener('pointerdown', e => {
     if (!r.actif) return;
+    if (indication) indication.classList.add('cachee');
     saisi = true; dx = e.clientX; dy = e.clientY;
     cadre.classList.add('saisi'); cadre.setPointerCapture(e.pointerId);
   });
@@ -851,7 +926,7 @@ function chargerImage(input, img, ensuite) {
 }
 
 // ------------------ Photo principale ------------------
-const recPrincipal = creerRecadreur('cadre-principal', 'img-principal', 'zoom-principal');
+const recPrincipal = creerRecadreur('cadre-principal', 'img-principal', 'zoom-moins-principal', 'zoom-plus-principal');
 
 $('depot-principal').onclick = () => $('fichier-principal').click();
 $('fichier-principal').onchange = e => {
@@ -900,7 +975,7 @@ function refairePrincipal() {
 }
 
 // ------------------ Galerie : un recadreur par photo ------------------
-const recGalerie = creerRecadreur('cadre-galerie', 'img-galerie', 'zoom-galerie');
+const recGalerie = creerRecadreur('cadre-galerie', 'img-galerie', 'zoom-moins-galerie', 'zoom-plus-galerie');
 let formatCourant = 'square';
 
 // Puces de format : changer de format relance le cadrage sur la meme photo
@@ -983,6 +1058,36 @@ function valider4() {
   aller(5);
 }
 
+// Tester mes liens : affiche chaque lien rempli en cliquable, pour verifier
+// qu'il mene au bon endroit avant de continuer
+function testerLiens() {
+  const zone = $('liste-test-liens');
+  ['instagram', 'facebook', 'website', 'other_link'].forEach(id => normaliserLien(id));
+  const liens = ['instagram', 'facebook', 'website', 'other_link'].map(id => valeur(id)).filter(Boolean);
+  if (!liens.length) { zone.innerHTML = '<div class="aide">Aucun lien \u00e0 tester pour l\u2019instant.</div>'; return; }
+  zone.innerHTML = '<div class="aide">Clique sur chaque lien pour v\u00e9rifier qu\u2019il m\u00e8ne au bon endroit :</div>' +
+    liens.map(v => `<a href="${echapper(v)}" target="_blank" rel="noopener">${echapper(v)} \u2197</a>`).join('');
+}
+
+// Apercu video : vignette YouTube cliquable (image publique, aucun code
+// externe), simple lien cliquable pour Vimeo et le reste
+function idYoutube(url) {
+  const m = (url || '').match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  return m ? m[1] : null;
+}
+function apercuVideoHtml(url) {
+  const id = idYoutube(url);
+  if (id) return `<a class="video-lien" href="${echapper(url)}" target="_blank" rel="noopener"><img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="Aper\u00e7u de la vid\u00e9o"><span class="jouer">\u25b6</span></a>`;
+  if (url) return `<div class="liste-test-liens"><a href="${echapper(url)}" target="_blank" rel="noopener">${echapper(url)} \u2197</a></div>`;
+  return '';
+}
+function majApercuVideo() {
+  const v = valeur('video_url');
+  $('apercu-video').innerHTML = apercuVideoHtml(v) +
+    (v ? '<div class="aide">Clique pour v\u00e9rifier que c\u2019est la bonne vid\u00e9o.</div>' : '');
+}
+$('video_url').addEventListener('input', majApercuVideo);
+
 // ------------------ Etape 5 ------------------
 document.querySelectorAll('#duo-video .puce').forEach(b => {
   b.onclick = () => {
@@ -1036,14 +1141,19 @@ function construireRecap() {
         ${valeur('subtitle') ? `<p class="sous-titre">${echapper(valeur('subtitle'))}</p>` : ''}
         <div class="apercu-google">
           <div class="legende">Ce que Google pourra afficher</div>
-          <div class="g-titre">${echapper(t.seoTitle)} - ${echapper(CONFIG.festival)}</div>
-          <div class="g-snippet">${echapper(valeur('snippet'))}</div>
+          <div class="g-ligne">
+            <div class="g-texte">
+              <div class="g-titre">${echapper(t.seoTitle)} - ${echapper(CONFIG.festival)}</div>
+              <div class="g-snippet">${echapper(valeur('snippet'))}</div>
+            </div>
+            <img class="g-thumb" src="${etat.featured_image}" alt="">
+          </div>
         </div>
         <p class="texte-page">${echapper(valeur('presentation'))}</p>
         ${valeur('bio') ? `<p class="bio-page">${echapper(valeur('bio'))}</p>` : ''}
         ${galerie ? `<div class="galerie-page">${galerie}</div>` : ''}
         ${liens ? `<div class="liens-page">${liens}</div>` : ''}
-        ${etat.video === 'oui' ? `<div class="liens-page">🎬 ${echapper(valeur('video_url'))}</div>` : ''}
+        ${etat.video === 'oui' ? apercuVideoHtml(valeur('video_url')) : ''}
       </div>
     </div>`;
 }
@@ -1072,7 +1182,8 @@ function envoyer() {
     category: etat.category,
     artist_type: etat.artist_type,
     name: valeur('name'),
-    real_name: valeur('real_name'),
+    first_name: valeur('first_name'),
+    last_name: valeur('last_name'),
     title_pro: valeur('title_pro'),
     email: valeur('email'),
     subtitle: valeur('subtitle'),
