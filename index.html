@@ -414,17 +414,17 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
       </div>
 
       <div class="champ" id="champ-identite">
-        <label class="etiquette obligatoire" id="etiquette-prenom" for="first_name">Ton prénom <span class="astuce">(usage interne, jamais publié)</span></label>
+        <label class="etiquette obligatoire" id="etiquette-prenom" for="first_name">Ton prénom</label>
         <input type="text" id="first_name" autocomplete="given-name">
       </div>
 
       <div class="champ">
-        <label class="etiquette obligatoire" id="etiquette-nom" for="last_name">Ton nom de famille <span class="astuce">(usage interne, jamais publié)</span></label>
+        <label class="etiquette obligatoire" id="etiquette-nom" for="last_name">Ton nom de famille</label>
         <input type="text" id="last_name" autocomplete="family-name">
       </div>
 
-      <div class="champ">
-        <label class="etiquette" for="title_pro">Ton titre ou ton activité <span class="astuce">(ex : « Céramiste », « Facilitatrice de cercles de femmes », « Cuisine vivante »)</span></label>
+      <div class="champ" id="champ-title-pro">
+        <label class="etiquette" id="etiquette-title-pro" for="title_pro">Ton titre ou ton activité <span class="astuce">(ex : « Céramiste », « Facilitatrice de cercles de femmes », « Cuisine vivante »)</span></label>
         <input type="text" id="title_pro">
       </div>
 
@@ -649,6 +649,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
   </main>
 
   <div class="pied">Festival Mantra Joie · Tes infos servent uniquement à créer ta page et à te contacter. · <span id="version-form"></span></div>
+  <div class="pied" style="margin-top:6px">Créé par <a href="https://holly-berridge.netlify.app" target="_blank" rel="noopener" style="color:inherit">Holly Berridge</a></div>
 </div>
 
 <script>document.addEventListener('DOMContentLoaded', () => { document.getElementById('version-form').textContent = CONFIG.version; });</script>
@@ -660,12 +661,12 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
    ne jamais les renommer sans changer le script Apps Script aussi.
    ================================================================ */
 const CONFIG = {
-  version:   'v2.4',   // affiche en bas de page, doit correspondre au script
+  version:   'v2.5',   // affiche en bas de page, doit correspondre au script
   festival:  'Festival Mantra Joie',
   code:      'MANTRA2026',
   scriptUrl: 'https://script.google.com/macros/s/AKfycby-x4py-iWew0GoEu1-2i8Z_LJmYifEE3t4pv3gIvzykXqHtyB1plKDXK0_kIIyIssH/exec',
   categories: ['Artiste', 'Atelier', 'Bien-être', 'Artisan', "L'Antre deux mondes", 'Stand / Miam Miam', 'Autre'],
-  typesArtiste: ['DJ ecstatic', 'Cercle de chants', 'Sieste musicale', 'Spectacle', 'Concert'],
+  typesArtiste: ['DJ ecstatic', 'Cercle de chants', 'Sieste musicale', 'Spectacle', 'Concert', 'Musicien accompagnant'],
   couleursConfettis: ['#D6248C', '#8E3DA6', '#2BB8C4', '#F0663C', '#E0A93B']
 };
 
@@ -742,20 +743,27 @@ function creerPuces(conteneur, valeurs, auClic) {
 }
 creerPuces('puces-categorie', CONFIG.categories, v => {
   etat.category = v;
-  $('champ-type').style.display = (v === 'Artiste') ? 'block' : 'none';
-  // Artiste : prenom et nom optionnels. Toutes les autres categories : requis.
   const artiste = (v === 'Artiste');
+  $('champ-type').style.display = artiste ? 'block' : 'none';
+  // Artiste : prenom et nom optionnels. Toutes les autres categories : requis.
   $('etiquette-prenom').classList.toggle('obligatoire', !artiste);
   $('etiquette-nom').classList.toggle('obligatoire', !artiste);
-  if (v !== 'Artiste') etat.artist_type = '';
+  // Titre / activite : cache pour les artistes, libelle adapte aux ateliers
+  $('champ-title-pro').style.display = artiste ? 'none' : 'block';
+  $('etiquette-title-pro').innerHTML = (v === 'Atelier')
+    ? 'Le titre de ton atelier <span class="astuce">(ex : \u00ab Danse intuitive \u00bb, \u00ab Cercle de parole \u00bb, \u00ab Yoga du rire \u00bb)</span>'
+    : 'Ton titre ou ton activit\u00e9 <span class="astuce">(ex : \u00ab C\u00e9ramiste \u00bb, \u00ab Facilitatrice de cercles de femmes \u00bb, \u00ab Cuisine vivante \u00bb)</span>';
+  if (!artiste) etat.artist_type = '';
 });
 creerPuces('puces-type', CONFIG.typesArtiste, v => { etat.artist_type = v; });
 
 function valider1() {
   if (!etat.category) return erreur(1, 'Choisis ta cat\u00e9gorie.');
+  if (etat.category === 'Artiste' && !etat.artist_type)
+    return erreur(1, 'Choisis ton type d\u2019artiste.');
   if (!valeur('name')) return erreur(1, 'Ton nom de sc\u00e8ne, de marque ou de stand est indispensable, c\u2019est lui qu\u2019on affiche.');
   if (etat.category !== 'Artiste' && (!valeur('first_name') || !valeur('last_name')))
-    return erreur(1, 'Ton pr\u00e9nom et ton nom de famille nous sont n\u00e9cessaires (usage interne uniquement, jamais publi\u00e9s).');
+    return erreur(1, 'Ton pr\u00e9nom et ton nom de famille sont n\u00e9cessaires.');
   if (!valeur('email') || !/^\S+@\S+\.\S+$/.test(valeur('email')))
     return erreur(1, 'Un email valide nous permet de te joindre si besoin.');
   majMotsCles();
