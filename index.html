@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>Ta page - Festival Mantra Joie</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⭐</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -97,12 +98,12 @@ h1, h2 { font-family: var(--police-titres); font-weight: 700; line-height: 1.2; 
 h1 { font-size: clamp(26px, 6vw, 34px); }
 h2 { font-size: clamp(22px, 5vw, 27px); }
 .intro { font-size: 17px; }
-.aide { font-size: 14px; color: rgba(28,27,58,.6); margin-top: 4px; }
+.aide { font-size: 14.5px; color: rgba(28,27,58,.8); margin-top: 4px; }
 
 /* ---------- Champs ---------- */
 .champ { margin-top: 20px; }
 label.etiquette { display: block; font-weight: 700; font-size: 15px; margin-bottom: 6px; }
-label.etiquette .astuce { font-weight: 400; color: rgba(28,27,58,.55); font-size: 13.5px; }
+label.etiquette .astuce { font-weight: 400; color: rgba(28,27,58,.7); font-size: 14px; }
 .obligatoire::after { content: " *"; color: var(--magenta); }
 input[type="text"], input[type="email"], input[type="url"], textarea {
   width: 100%; font: inherit; font-size: 16px; color: var(--navy);
@@ -409,7 +410,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
       </div>
 
       <div class="champ">
-        <label class="etiquette obligatoire" for="name">Ton nom de scène, de marque ou de stand <span class="astuce">(celui qu'on affichera sur ta page)</span></label>
+        <label class="etiquette obligatoire" for="name">Ton nom de scène, de marque ou de stand <span class="astuce">(celui qu'on affichera sur ta page ; si tu n'as pas de nom de marque, mets simplement ton prénom et ton nom)</span></label>
         <input type="text" id="name">
       </div>
 
@@ -421,6 +422,17 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
       <div class="champ">
         <label class="etiquette obligatoire" id="etiquette-nom" for="last_name">Ton nom de famille</label>
         <input type="text" id="last_name" autocomplete="family-name">
+      </div>
+
+      <div class="champ">
+        <button type="button" class="btn-inserer" id="btn-deux" onclick="basculerPersonne2()">✌️ Nous sommes deux ?</button>
+      </div>
+
+      <div class="champ" id="champ-personne2" style="display:none; margin-top:8px">
+        <label class="etiquette" for="first_name_2">Prénom de la deuxième personne</label>
+        <input type="text" id="first_name_2">
+        <label class="etiquette" for="last_name_2" style="margin-top:12px">Nom de la deuxième personne</label>
+        <input type="text" id="last_name_2">
       </div>
 
       <div class="champ" id="champ-title-pro">
@@ -508,7 +520,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
           </div>
           <div class="nav-etapes" style="margin-top:12px">
             <button class="btn btn-retour" onclick="annulerPrincipal()">Changer de photo</button>
-            <button class="btn btn-avant" onclick="garderPrincipal()">Valider</button>
+            <button class="btn btn-avant" onclick="garderPrincipal()">Valider la photo principale</button>
           </div>
         </div>
 
@@ -533,7 +545,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
           </div>
           <div class="nav-etapes" style="margin-top:12px">
             <button class="btn btn-retour" onclick="annulerGalerie()">Annuler</button>
-            <button class="btn btn-avant" onclick="garderGalerie()">Valider</button>
+            <button class="btn btn-avant" onclick="garderGalerie()">Valider cette photo</button>
           </div>
         </div>
 
@@ -610,8 +622,8 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
     <!-- ============ ETAPE 6 : RECAP ============ -->
     <section class="ecran" id="ecran-6">
       <p class="surtitre">Étape 6 sur 6</p>
-      <h2>Voici ta page 👀</h2>
-      <p>C'est à peu près comme ça qu'elle apparaîtra. Vérifie que tout te ressemble.</p>
+      <h2>Ton récapitulatif 👀</h2>
+      <p>Vérifie que toutes tes infos sont justes. La mise en page finale de ta page sera faite avec amour sur le site du festival.</p>
 
       <div id="recap"></div>
 
@@ -661,7 +673,7 @@ textarea { resize: none; overflow: hidden; min-height: 90px; }
    ne jamais les renommer sans changer le script Apps Script aussi.
    ================================================================ */
 const CONFIG = {
-  version:   'v2.5',   // affiche en bas de page, doit correspondre au script
+  version:   'v2.7',   // affiche en bas de page, doit correspondre au script
   festival:  'Festival Mantra Joie',
   code:      'MANTRA2026',
   scriptUrl: 'https://script.google.com/macros/s/AKfycby-x4py-iWew0GoEu1-2i8Z_LJmYifEE3t4pv3gIvzykXqHtyB1plKDXK0_kIIyIssH/exec',
@@ -774,6 +786,13 @@ function valider1() {
 function nomEtTitre() {
   const n = valeur('name'), t = valeur('title_pro');
   return t ? n + ', ' + t : n;
+}
+function basculerPersonne2() {
+  const c = $('champ-personne2');
+  const ouvert = c.style.display !== 'none';
+  c.style.display = ouvert ? 'none' : 'block';
+  $('btn-deux').textContent = ouvert ? '\u270c\ufe0f Nous sommes deux ?' : '\u2716 Finalement non';
+  if (ouvert) { $('first_name_2').value = ''; $('last_name_2').value = ''; }
 }
 function inserer(idChamp, texte) {
   if (!texte) return;
@@ -1038,7 +1057,12 @@ function afficherVignettes() {
   });
 }
 function valider3() {
-  if (!etat.featured_image) return erreur(3, 'Il nous faut ta photo principale : c\u2019est elle qui fait briller ta page.');
+  if (!etat.featured_image) {
+    const enCours = $('recadreur-principal').style.display === 'block';
+    return erreur(3, enCours
+      ? 'Ta photo est presque pr\u00eate : clique sur \u00ab Valider la photo principale \u00bb pour la garder.'
+      : 'Ajoute et valide ta photo principale avant de continuer : c\u2019est elle qui fait briller ta page.');
+  }
   aller(4);
 }
 
@@ -1158,7 +1182,7 @@ function construireRecap() {
           </div>
         </div>
         <p class="texte-page">${echapper(valeur('presentation'))}</p>
-        ${valeur('bio') ? `<p class="bio-page">${echapper(valeur('bio'))}</p>` : ''}
+        ${valeur('bio') ? `<p class="surtitre" style="margin-top:12px">Bio</p><p class="bio-page" style="margin-top:2px">${echapper(valeur('bio'))}</p>` : ''}
         ${galerie ? `<div class="galerie-page">${galerie}</div>` : ''}
         ${liens ? `<div class="liens-page">${liens}</div>` : ''}
         ${etat.video === 'oui' ? apercuVideoHtml(valeur('video_url')) : ''}
@@ -1192,6 +1216,8 @@ function envoyer() {
     name: valeur('name'),
     first_name: valeur('first_name'),
     last_name: valeur('last_name'),
+    first_name_2: valeur('first_name_2'),
+    last_name_2: valeur('last_name_2'),
     title_pro: valeur('title_pro'),
     email: valeur('email'),
     subtitle: valeur('subtitle'),
@@ -1236,7 +1262,7 @@ function envoyer() {
     let rep = {};
     try { rep = JSON.parse(texte); } catch (e) {}
     if (res.ok && rep.ok) {
-      const prenom = valeur('name').split(' ')[0];
+      const prenom = valeur('first_name') || valeur('name');
       $('titre-merci').textContent = `Merci ${prenom} ! \ud83c\udf89`;
       aller('merci');
       confettis();
